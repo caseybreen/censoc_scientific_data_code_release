@@ -1,0 +1,157 @@
+---
+title: "Mortality Coverage: DMF and Numident"
+author: Casey Breen
+date: February 12, 2023
+---
+
+Summary: Code to benchmark the mortality coverage of the DMF and Numident (ages 65+) against the Human Mortality database.  
+
+## Setup 
+
+Library packages and source functions 
+
+```{r}
+## Library packages 
+library(tidyverse)
+library(data.table)
+library(memisc)
+library(here)
+library(HMDHFDplus)
+library(gridExtra)
+library(ggpubr)
+library(cowplot)
+library(gt)
+library(fixest)
+library(stargazer)
+library(choroplethrZip)
+library(choroplethr)
+library(sf)
+library(broom)
+library(lubridate)
+
+## Read in BUNMD file
+bunmd <- fread(here("data/bunmd_v2.csv"))
+hmd <- fread(here("data/hmd_deaths_1x1_usa.csv"))
+```
+
+# Figure 1 — Compare BUNMD and HMD Death Coverage 
+
+```{r}
+## Get HMD deaths from website
+hmd <- hmd %>%
+  mutate(linking_key = paste(Year, Age, sep = "_" ))
+
+## Tabulate deaths in BUNMD for 65+
+numident_deaths_tabulated <- bunmd %>% 
+  filter(death_age >= 65) %>% 
+  group_by(Year = dyear) %>% 
+  summarize(deaths = n()) %>% 
+  mutate(source = "Numident")
+
+# ## Tabulate deaths in BUNMD for 65+
+# bunmd.deaths.tabulated_complete <- bunmd %>% 
+#   filter(!is.na(ccweight)) %>% 
+#   filter(death_age >= 65) %>% 
+#   group_by(Year = dyear) %>% 
+#   summarize(deaths = n()) %>% 
+#   mutate(source = "BUNMD Complete Case")
+
+## Tabulate deaths in HMD for 65+ 
+hmd_deaths_tabulated <- hmd %>%
+  filter(Age >= 65) %>% 
+  group_by(Year) %>% 
+  summarize(deaths = sum(Total)) %>% 
+  mutate(source = "Human Mortality Database")
+
+## Combine into one data frame 
+data_for_plot_numident <- numident_deaths_tabulated %>%  ## bunmd.deaths.tabulated_complete %>% 
+  bind_rows(hmd_deaths_tabulated) %>% 
+  filter(Year > 1960 & Year < 2009)
+
+## Create death coverage plot
+numident_coverage <- ggplot(data_for_plot_numident) + 
+  geom_line((aes(x = Year, y = deaths, linetype = source)), size = 1) + 
+   labs(x = "Year",
+       y = "Count",
+       title = "Numident Death Coverage (65+)") +
+  scale_y_continuous(labels = scales::comma) + 
+  scale_x_continuous(breaks = scales::pretty_breaks(n=10)) + 
+  theme_cowplot() + 
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  theme(legend.key.width = unit(1.5, "cm")) + 
+  scale_linetype_manual(values = c("solid", "b")) + 
+  geom_vline(xintercept = c(1988, 2005), linetype = "longdash", color = "grey", size = 1)
+```
+
+## DMF Death Coverage 
+
+```{r}
+## Read in BUNMD file
+dmf <- fread("/censoc/data/dmf/dmf.csv", colClasses = c('dob'='character', 'dod' = 'character'))
+
+## now get birth and death year
+dmf[,"byear" := as.numeric(substr(dob, 5, 8))]
+dmf[,"dyear" := as.numeric(substr(dod, 5, 8))]
+## birth and death month
+dmf[,"bmonth" := as.numeric(substr(dob, 1, 2))]
+dmf[,"dmonth" := as.numeric(substr(dod, 1, 2))]
+## birth and death dat
+dmf[,"bday" := as.numeric(substr(dob, 3, 4))]
+dmf[,"dday" := as.numeric(substr(dod, 3, 4))]
+## now get census_age
+dmf[,"census_age" := ifelse(bmonth < 4,
+                                 1940 - byear,
+                                 1939 - byear)]
+
+## calculate age of death 
+dmf <- dmf %>% 
+  calculate_age_at_death()
+
+## Get HMD deaths from website
+hmd_deaths <- fread("/data/josh/CenSoc/hmd/hmd_statistics/deaths/Deaths_1x1/USA.Deaths_1x1.txt")
+
+## tabulate deaths 
+dmf.deaths.tabulated <- dmf %>%
+  filter(death_age >= 65) %>%
+  group_by(Year = dyear) %>%
+  filter(Year > 1940) %>%
+  summarize(deaths = n()) %>%
+  mutate(source = "DMF")
+
+## tabulate hmd deaths 
+hmd.deaths.tabulated <- hmd_deaths %>%
+  filter(Age >= 65) %>%
+  group_by(Year) %>%
+  filter(Year > 1940) %>%
+  summarize(deaths = sum(Total)) %>%
+  mutate(source = "Human Mortality Database")
+
+## combine tabulations 
+data.for.plot <- dmf.deaths.tabulated  %>%
+  bind_rows(hmd.deaths.tabulated) %>%
+  filter(Year > 1960 & Year < 2009)
+
+## Create death coverage plot
+dmf_death_coverage <- ggplot(data.for.plot) +  
+ geom_line((aes(x = Year, y = deaths, linetype = source)), size = 1) + 
+   labs(x = "Year",
+       y = "Count",
+       title = "DMF Death Coverage (65+)") +
+  scale_y_continuous(labels = scales::comma) + 
+  scale_linetype_manual(values=c("b", "solid")) + 
+  scale_x_continuous(breaks = scales::pretty_breaks(n=10)) + 
+  theme_cowplot() + 
+  theme(legend.position="bottom", legend.title = element_blank()) +
+  theme(legend.key.width=unit(1.5, "cm")) + 
+  geom_vline(xintercept = c(1975, 2005), linetype = "longdash", color = "grey", size = 1)
+```
+
+```{r}
+## mortality coverage 
+combined_plot <- cowplot::plot_grid(numident_coverage, dmf_death_coverage, ncol = 1)
+
+## ggplot 
+ggsave(plot = combined_plot, filename = here("figs/combined_coverage_plot.png"), width = 8, height = 10)
+```
+
+
