@@ -59,7 +59,7 @@ numident_mr <- numident %>%
   filter(death_age != min(death_age) & death_age != max(death_age)) %>% 
   group_by(sex, death_age) %>% 
   summarize(n = sum(weight_conservative)) %>% 
-  mutate(total_deaths = sum(n) * 1.05352238) %>% 
+  mutate(total_deaths = sum(n) * 1.05352238) %>% ## estimated from hmd exposure 
   mutate(cum_deaths = cumsum(n)) %>% 
   mutate(survivors = total_deaths - lag(cum_deaths)) %>% 
   mutate(male = n / survivors) %>% 
@@ -81,12 +81,12 @@ numident_mr_adjusted <- numident %>%
 ## numident mortality rate validation plot 
 numident_mortality_validation <- hmd_cohort_1910 %>% 
   mutate(death_age = age) %>% 
-  bind_rows(numident_mort_weight %>% 
+  bind_rows(numident_mr_adjusted %>% 
               filter(sex == 1)) %>% 
-   bind_rows(numident_mort %>% 
+   bind_rows(numident_mr %>% 
               filter(sex == 1)) %>% 
   ggplot(aes(x = death_age, y = male, color = source, linetype = source)) + 
-  geom_line(size = 1.5, alpha = 0.9) + 
+  geom_line(size = 1.5, alpha = 1) + 
   # ggsci::scale_color_lancet() + 
   scale_color_manual(values=c("red", "blue", "black")) + 
   scale_linetype_manual(values=c("solid", "solid", "dashed")) + 
@@ -98,7 +98,7 @@ numident_mortality_validation <- hmd_cohort_1910 %>%
   xlim(65, 100) + 
   labs(x = "Death Age",
        y = "Mortality Rate",
-       title = "CenSoc-Numident Mortality Rates (Cohort 1910)") + 
+       title = "CenSoc-Numident 1910 Cohort") + 
   guides(color = guide_legend(nrow = 3))
 ```
 
@@ -125,7 +125,7 @@ dmf_mort <- dmf %>%
   filter(death_age != min(death_age) & death_age != max(death_age)) %>% 
   group_by(death_age) %>% 
   summarize(n = sum(weight_conservative)) %>% 
-  mutate(total_deaths = sum(n) * 1.02705555) %>% 
+  mutate(total_deaths = sum(n) * 1.02705555) %>% ## estimated from hmd exposure 
   mutate(cum_deaths = cumsum(n)) %>% 
   mutate(survivors = total_deaths - lag(cum_deaths)) %>% 
   mutate(male = n / survivors) %>% 
@@ -138,7 +138,7 @@ dmf_mortality_estimation <- hmd_cohort_1910 %>%
   bind_rows(dmf_mort_weight) %>% 
    bind_rows(dmf_mort) %>% 
   ggplot(aes(x = death_age, y = male, color = source, linetype = source)) + 
-  geom_line(size = 1.5, alpha = .9) + 
+  geom_line(size = 1.5, alpha = 1) + 
   scale_color_manual(values=c("red", "blue", "black")) + 
   scale_linetype_manual(values=c("solid", "solid", "dashed")) + 
   scale_y_continuous(trans='log10') + 
@@ -149,7 +149,7 @@ dmf_mortality_estimation <- hmd_cohort_1910 %>%
   xlim(65, 100) + 
   labs(x = "Death Age",
        y = "Mortality Rate",
-       title = "CenSoc-DMF Mortality Rates (Cohort 1910)") + 
+       title = "CenSoc-DMF 1910 Cohort") + 
   guides(color = guide_legend(nrow = 3)) 
 ```
 
@@ -159,7 +159,7 @@ dmf_mortality_estimation <- hmd_cohort_1910 %>%
 validation_mortality_plot <- cowplot::plot_grid(numident_mortality_validation, dmf_mortality_estimation, labels = "auto")
 
 ## save combined mortality estimation plot 
-ggsave(validation_mortality_plot, filename = "figs/mortality_validation_hmd_plot.png", width = 14, height = 6)
+ggsave(validation_mortality_plot, filename = here("figs/mortality_validation_hmd_plot.png"), width = 12, height = 5)
 ```
 
 
