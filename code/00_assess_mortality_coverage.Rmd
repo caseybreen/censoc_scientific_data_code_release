@@ -28,6 +28,8 @@ library(choroplethr)
 library(sf)
 library(broom)
 library(lubridate)
+library(censocdev)
+library(ggrepel)
 
 ## Read in BUNMD file
 bunmd <- fread(here("data/bunmd_v2.csv"))
@@ -61,16 +63,37 @@ hmd_deaths_tabulated <- hmd %>%
   filter(Age >= 65) %>% 
   group_by(Year) %>% 
   summarize(deaths = sum(Total)) %>% 
-  mutate(source = "Human Mortality Database")
+  mutate(source = "HMD")
+
+
+## read in censoc_numident 
+censoc_numident <- fread("/censoc/data/censoc_v2.1/censoc_numident_v2.1.csv")
+
+## censoc numident tabulated 
+censoc_numident_tabulated <- censoc_numident %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+   group_by(Year = dyear) %>% 
+  summarize(deaths = n()) %>% 
+  mutate(source = "CenSoc-Numident")
+
 
 ## Combine into one data frame 
 data_for_plot_numident <- numident_deaths_tabulated %>%  ## bunmd.deaths.tabulated_complete %>% 
   bind_rows(hmd_deaths_tabulated) %>% 
+  bind_rows(censoc_numident_tabulated) %>% 
   filter(Year > 1960 & Year < 2009)
 
 ## Create death coverage plot
-numident_coverage <- ggplot(data_for_plot_numident) + 
-  geom_line((aes(x = Year, y = deaths, linetype = source)), size = 1) + 
+numident_coverage <-  data_for_plot_numident %>% 
+   mutate(label = case_when(
+    Year == 2007 & source == "Numident" ~ "Numident",
+    Year == max(Year) & source == "HMD" ~ "HMD",
+    Year == 2005 & source == "CenSoc-Numident" ~ "CenSoc-Numident",
+    TRUE ~ NA_character_
+  )) %>% 
+  ggplot(aes(x = Year, y = deaths, linetype = source)) + 
+  geom_vline(xintercept = c(1988, 2005), linetype = "longdash", color = "grey", size = 1) + 
+  geom_line(size = 1) + 
    labs(x = "Year",
        y = "Count",
        title = "Numident Death Coverage (65+)") +
@@ -79,8 +102,12 @@ numident_coverage <- ggplot(data_for_plot_numident) +
   theme_cowplot() + 
   theme(legend.position = "bottom", legend.title = element_blank()) +
   theme(legend.key.width = unit(1.5, "cm")) + 
-  scale_linetype_manual(values = c("solid", "b")) + 
-  geom_vline(xintercept = c(1988, 2005), linetype = "longdash", color = "grey", size = 1)
+  scale_linetype_manual(values = c("dashed", "solid", "dotted")) + 
+  theme(legend.position="bottom", legend.title = element_blank()) +
+  theme(legend.key.width=unit(1.5, "cm")) + 
+  geom_label_repel(aes(label = label),
+                   nudge_x = 4,
+                  na.rm = TRUE, size = 3) 
 ```
 
 ## DMF Death Coverage 
@@ -124,31 +151,53 @@ hmd.deaths.tabulated <- hmd_deaths %>%
   group_by(Year) %>%
   filter(Year > 1940) %>%
   summarize(deaths = sum(Total)) %>%
-  mutate(source = "Human Mortality Database")
+  mutate(source = "HMD")
+
+## dmf death coverage 
+censoc_dmf <- fread("/censoc/data/censoc_v2.1/censoc_dmf_v2.1.csv")
+
+## censoc numident tabulated 
+censoc_dmf_tabulated <- censoc_dmf %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  group_by(Year = dyear) %>% 
+  summarize(deaths = n()) %>% 
+  mutate(source = "CenSoc-DMF")
 
 ## combine tabulations 
-data.for.plot <- dmf.deaths.tabulated  %>%
+data_for_plot <- dmf.deaths.tabulated  %>%
   bind_rows(hmd.deaths.tabulated) %>%
+  bind_rows(censoc_dmf_tabulated) %>% 
   filter(Year > 1960 & Year < 2009)
 
-## Create death coverage plot
-dmf_death_coverage <- ggplot(data.for.plot) +  
- geom_line((aes(x = Year, y = deaths, linetype = source)), size = 1) + 
+## Create death coverage plot.
+dmf_death_coverage <- data_for_plot %>% 
+  mutate(label = case_when(
+    Year == max(Year) & source == "DMF" ~ "DMF",
+    Year == max(Year) & source == "HMD" ~ "HMD",
+    Year == 2005 & source == "CenSoc-DMF" ~ "CenSoc-DMF",
+    TRUE ~ NA_character_
+  )) %>% 
+ # mutate(label = if_else(Year == 2005, as.character(source), NA_character_)) %>%
+ ggplot(aes(x = Year, y = deaths, linetype = source, group = source)) +  
+ geom_vline(xintercept = c(1975, 2005), linetype = "longdash", color = "grey", size = 1) + 
+ geom_line(size = 1) + 
    labs(x = "Year",
        y = "Count",
        title = "DMF Death Coverage (65+)") +
   scale_y_continuous(labels = scales::comma) + 
-  scale_linetype_manual(values=c("b", "solid")) + 
+  scale_linetype_manual(values = c("dashed", "dotted", "solid")) + 
   scale_x_continuous(breaks = scales::pretty_breaks(n=10)) + 
   theme_cowplot() + 
   theme(legend.position="bottom", legend.title = element_blank()) +
   theme(legend.key.width=unit(1.5, "cm")) + 
-  geom_vline(xintercept = c(1975, 2005), linetype = "longdash", color = "grey", size = 1)
+  geom_label_repel(aes(label = label),
+                   nudge_x = 3,
+                  na.rm = TRUE, size = 3) 
 ```
 
 ```{r}
 ## mortality coverage 
-combined_plot <- cowplot::plot_grid(numident_coverage, dmf_death_coverage, ncol = 1)
+combined_plot <- cowplot::plot_grid(numident_coverage, dmf_death_coverage, ncol = 1, labels = "auto")
 
 ## ggplot 
 ggsave(plot = combined_plot, filename = here("figs/combined_coverage_plot.png"), width = 8, height = 10)

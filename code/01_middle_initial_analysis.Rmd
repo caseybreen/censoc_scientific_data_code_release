@@ -1,0 +1,193 @@
+---
+title: "Mortality Coverage: DMF and Numident"
+author: Casey Breen
+date: February 12, 2023
+---
+
+Summary: Code to assess the mortality coverage of the  
+
+## Setup 
+
+Library packages and source functions 
+
+```{r}
+## Library packages 
+library(tidyverse)
+library(data.table)
+library(memisc)
+library(here)
+library(HMDHFDplus)
+library(gridExtra)
+library(ggpubr)
+library(cowplot)
+library(gt)
+library(fixest)
+library(stargazer)
+library(choroplethrZip)
+library(choroplethr)
+library(sf)
+library(broom)
+library(lubridate)
+library(censocdev)
+library(ggrepel)
+
+## Read in BUNMD file
+dmf_middle <- fread("/data/josh/CenSoc/censoc_data/middle_initial/dmf_v2.1_middle_initials.csv")
+numident_middle <- fread("/data/josh/CenSoc/censoc_data/middle_initial/numident_v2.1_middle_initials.csv")
+
+```
+
+
+```{r}
+## dmf education X middle initial 
+educ_yrs_dmf <- dmf_middle %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  group_by(educ_yrs) %>% 
+  filter(middle_name_dmf != "" & middle_name_census != "") %>% 
+  summarize(agree = mean(middle_name_dmf == middle_name_census),
+            se = mean(middle_name_dmf == middle_name_census)/sqrt(n())) %>% 
+  mutate(dataset = "CenSoc DMF")
+
+## dmf education X middle initial 
+educ_yrs_numident <- numident_middle %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  group_by(educ_yrs) %>% 
+  filter(middle_name_numident != "" & middle_name_census != "") %>% 
+  summarize(agree = mean(middle_name_numident == middle_name_census),
+            se = mean(middle_name_numident == middle_name_census)/sqrt(n())) %>% 
+  mutate(dataset = "CenSoc Numident")
+
+## education years plot 
+educ_yrs_plot <- educ_yrs_dmf %>% 
+  bind_rows(educ_yrs_numident) %>% 
+  ggplot(aes(x = educ_yrs, y = agree, ymin = agree - 1.96*se, ymax = agree + 1.96*se, color = dataset, shape = dataset)) + 
+  geom_pointrange(size = .8,  position = position_dodge2(0.4)) + 
+  geom_line(linetype = "dashed") + 
+  cowplot::theme_cowplot() + 
+  scale_y_continuous(labels = scales::percent) + 
+  ggsci::scale_color_lancet() + 
+    scale_x_continuous(breaks=seq(0,17,2)) +
+  labs(x = "Years of Education",
+       y = "Middle Initial Agreement",
+       title = "Education") + 
+  theme(legend.position = "none")
+```
+
+
+
+```{r}
+## dmf race X middle initial 
+race_dmf <- dmf_middle %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  mutate(race_string = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  group_by(race_string) %>% 
+  filter(middle_name_dmf != "" & middle_name_census != "") %>% 
+  summarize(agree = mean(middle_name_dmf == middle_name_census),
+            se = mean(middle_name_dmf == middle_name_census)/sqrt(n())) %>% 
+  mutate(dataset = "CenSoc DMF")
+
+## numident education X middle initial 
+race_numident <- numident_middle %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  mutate(race_string = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  )) %>% 
+  group_by(race_string) %>% 
+  filter(middle_name_numident != "" & middle_name_census != "") %>% 
+  summarize(agree = mean(middle_name_numident == middle_name_census),
+            se = mean(middle_name_numident == middle_name_census)/sqrt(n())) %>% 
+  mutate(dataset = "CenSoc Numident")
+
+## race plot 
+race_plot <- race_dmf %>% 
+  bind_rows(race_numident) %>% 
+  ggplot(aes(y = race_string, x = agree, xmin = agree -1.96*se, xmax = agree + 1.96*se, color = dataset, shape = dataset)) + 
+  geom_pointrange(size = 1, position = position_dodge2(0.2)) + 
+  geom_line(linetype = "dashed") + 
+  cowplot::theme_cowplot() + 
+  scale_x_continuous(labels = scales::percent) + 
+  ggsci::scale_color_lancet() + 
+  labs(y = "",
+       x = "Middle Initial Agreement",
+       title = "Race ") + 
+  theme(legend.position = "none")
+```
+
+
+```{r}
+## dmf byear X middle initial 
+byear_dmf <- dmf_middle %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  group_by(byear) %>% 
+  filter(middle_name_dmf != "" & middle_name_census != "") %>% 
+  summarize(agree = mean(middle_name_dmf == middle_name_census),
+            se = mean(middle_name_dmf == middle_name_census)/sqrt(n())) %>% 
+  mutate(dataset = "CenSoc DMF")
+
+## numident byear X middle initial 
+byear_numident <- numident_middle %>% 
+  filter(link_abe_exact_conservative == 1) %>% 
+  group_by(byear) %>% 
+  filter(middle_name_numident != "" & middle_name_census != "") %>% 
+  summarize(agree = mean(middle_name_numident == middle_name_census),
+            se = mean(middle_name_numident == middle_name_census)/sqrt(n())) %>% 
+  mutate(dataset = "CenSoc Numident")
+
+## race plot 
+byear_plot <- byear_dmf %>% 
+  bind_rows(byear_numident) %>% 
+    filter(byear %in% 1900:1930) %>% 
+  ggplot(aes(y = agree, x = byear, ymin = agree -1.96*se, ymax = agree + 1.96*se, color = dataset, shape = dataset)) + 
+  geom_pointrange(size = .8, position = position_dodge2(0.4)) + 
+  geom_line(linetype = "dashed") + 
+  cowplot::theme_cowplot() + 
+  scale_y_continuous(labels = scales::percent, limits = c(0.5, 1)) + 
+  ggsci::scale_color_lancet() + 
+  labs(x = "Birth Year",
+       y = "Middle Initial Agreement",
+       title = "Birth Year ") + 
+  theme(legend.position = "bottom") 
+
+```
+
+
+```{r}
+## birth year 
+top <- cowplot::plot_grid(educ_yrs_plot, race_plot, labels = "auto")
+middle_initial_agreement <- cowplot::plot_grid(top, byear_plot, nrow = 2, labels = c("", "c"))
+
+## save plot 
+ggsave(plot = middle_initial_agreement, filename = here("figs/middle_initial_plot.png"), height = 8, width = 8)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
