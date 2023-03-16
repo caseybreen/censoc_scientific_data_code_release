@@ -35,6 +35,7 @@ hmd_mr <- fread("/data/josh/CenSoc/hmd/hmd_statistics/c_death_rates/cMx_1x1/USA.
 hmd_exposure <- fread("/data/josh/CenSoc/hmd/hmd_statistics/c_exposures/cExposures_1x1/USA.cExposures_1x1.txt")
 ```
 
+## calculate hmd mortality rates 
 
 ```{r}
 ## hmd mortality rates  
@@ -45,9 +46,11 @@ hmd_cohort_1910 <- hmd_mr %>%
          female = as.numeric(Female),
          male = as.numeric(Male),
          total = as.numeric(Total)) %>% 
-  mutate(source = "HMD (Human Mortality Database)")
+  mutate(source = "HMD (Human Mortality Database)") %>% 
+  mutate(death_age = age) 
 ```
 
+## calculate numident mortality rates 
 
 ```{r}
 ## numident mortality rates 
@@ -55,7 +58,7 @@ numident <- numident %>%
   filter(byear == 1910)
 
 ## numident mortality rate 
-numident_mr <- numident %>% 
+numident_mr_adjusted <- numident %>% 
   filter(death_age != min(death_age) & death_age != max(death_age)) %>% 
   group_by(sex, death_age) %>% 
   summarize(n = sum(weight_conservative)) %>% 
@@ -64,10 +67,11 @@ numident_mr <- numident %>%
   mutate(survivors = total_deaths - lag(cum_deaths)) %>% 
   mutate(male = n / survivors) %>% 
   dplyr::select(death_age, male) %>% 
-  mutate(source = "CenSoc-Numident Reverse Survival (Adjusted)")
+  mutate(source = "CenSoc-Numident Reverse Survival (Adjusted)") %>% 
+  filter(sex == 1)
 
 ## numident mortality rate adjusted 
-numident_mr_adjusted <- numident %>% 
+numident_mr <- numident %>% 
   filter(death_age != min(death_age) & death_age != max(death_age)) %>% 
   group_by(sex, death_age) %>% 
   summarize(n = sum(weight_conservative)) %>% 
@@ -76,20 +80,19 @@ numident_mr_adjusted <- numident %>%
   mutate(survivors = total_deaths - lag(cum_deaths)) %>% 
   mutate(male = n / survivors) %>% 
   dplyr::select(death_age, male) %>% 
-  mutate(source = "CenSoc-Numident Reverse Survival")
+  mutate(source = "CenSoc-Numident Reverse Survival") %>% 
+  filter(sex == 1)
 
 ## numident mortality rate validation plot 
-numident_mortality_validation <- hmd_cohort_1910 %>% 
-  mutate(death_age = age) %>% 
-  bind_rows(numident_mr_adjusted %>% 
-              filter(sex == 1)) %>% 
-   bind_rows(numident_mr %>% 
-              filter(sex == 1)) %>% 
+numident_mortality_validation <- numident_mr_adjusted  %>% 
+  bind_rows(hmd_cohort_1910) %>% 
+   # bind_rows(numident_mr %>% 
+   #            filter(sex == 1)) %>% 
   ggplot(aes(x = death_age, y = male, color = source, linetype = source)) + 
   geom_line(size = 1.5, alpha = 1) + 
   # ggsci::scale_color_lancet() + 
-  scale_color_manual(values=c("red", "blue", "black")) + 
-  scale_linetype_manual(values=c("solid", "solid", "dashed")) + 
+  scale_color_manual(values=c("blue", "black")) + 
+  scale_linetype_manual(values=c("dashed", "solid")) + 
   scale_y_continuous(trans='log10') + 
   cowplot::theme_cowplot() + 
   theme(legend.position = "bottom",
@@ -102,6 +105,7 @@ numident_mortality_validation <- hmd_cohort_1910 %>%
   guides(color = guide_legend(nrow = 3))
 ```
 
+## calculate dmf mortality rates 
 
 ```{r}
 ## dmf filter to 1910
@@ -109,38 +113,38 @@ dmf <- dmf %>%
   filter(byear == 1910) 
 
 ## dmf mortality rate 
-dmf_mort_weight <- dmf %>% 
+dmf_mr_adjusted <- dmf %>% 
   filter(death_age != min(death_age) & death_age != max(death_age)) %>% 
   group_by(death_age) %>% 
   summarize(n = sum(weight_conservative)) %>% 
-  mutate(total_deaths = sum(n)) %>% 
-  mutate(cum_deaths = cumsum(n)) %>% 
-  mutate(survivors = total_deaths - lag(cum_deaths)) %>% 
-  mutate(male = n / survivors) %>% 
-  dplyr::select(death_age, male) %>% 
-  mutate(source = "CenSoc-DMF Reverse Survival")
-
-## dmf mortality rate adjusted
-dmf_mort <- dmf %>% 
-  filter(death_age != min(death_age) & death_age != max(death_age)) %>% 
-  group_by(death_age) %>% 
-  summarize(n = sum(weight_conservative)) %>% 
-  mutate(total_deaths = sum(n) * 1.02705555) %>% ## estimated from hmd exposure 
+  mutate(total_deaths = sum(n)  * 1.02705555) %>% 
   mutate(cum_deaths = cumsum(n)) %>% 
   mutate(survivors = total_deaths - lag(cum_deaths)) %>% 
   mutate(male = n / survivors) %>% 
   dplyr::select(death_age, male) %>% 
   mutate(source = "CenSoc-DMF Reverse Survival (Adjusted)")
 
+## dmf mortality rate adjusted
+# dmf_mr <- dmf %>% 
+#   filter(death_age != min(death_age) & death_age != max(death_age)) %>% 
+#   group_by(death_age) %>% 
+#   summarize(n = sum(weight_conservative)) %>% 
+#   mutate(total_deaths = sum(n)) %>% ## estimated from hmd exposure 
+#   mutate(cum_deaths = cumsum(n)) %>% 
+#   mutate(survivors = total_deaths - lag(cum_deaths)) %>% 
+#   mutate(male = n / survivors) %>% 
+#   dplyr::select(death_age, male) %>% 
+#   mutate(source = "CenSoc-DMF Reverse Survival")
+
 ## dmf mortality rate validation plot 
 dmf_mortality_estimation <- hmd_cohort_1910 %>% 
   mutate(death_age = age) %>% 
-  bind_rows(dmf_mort_weight) %>% 
-   bind_rows(dmf_mort) %>% 
+  bind_rows(dmf_mr_adjusted) %>% 
+ #  bind_rows(dmf_mort) %>% 
   ggplot(aes(x = death_age, y = male, color = source, linetype = source)) + 
   geom_line(size = 1.5, alpha = 1) + 
-  scale_color_manual(values=c("red", "blue", "black")) + 
-  scale_linetype_manual(values=c("solid", "solid", "dashed")) + 
+  scale_color_manual(values=c("blue", "black")) + 
+  scale_linetype_manual(values=c("dashed", "solid")) + 
   scale_y_continuous(trans='log10') + 
   cowplot::theme_cowplot() + 
     theme(legend.position = "bottom",
