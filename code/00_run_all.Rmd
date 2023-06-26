@@ -3,8 +3,7 @@ title: "Run all Scripts"
 
 ## Summary 
 
-This script runs all code to replicate figures and tables for the paper "CenSoc: Linked Administrative Mortality Records for
-Individual-level Mortality Research." 
+This script runs all code to replicate figures and tables for the paper "CenSoc: Linked Administrative Mortality Records for Individual-level Mortality Research." 
 
 The scripts are numbered in the order they should be run.
 

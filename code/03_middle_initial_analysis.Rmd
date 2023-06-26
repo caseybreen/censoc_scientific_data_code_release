@@ -4,7 +4,7 @@ author: Casey Breen
 date: February 12, 2023
 ---
 
-Summary: Code to assess the mortality coverage of the DMF and Numident.  
+Summary: Code to assess the middle initial agreement of the CenSoc-DMF and CenSoc-Numident. Middle initial was not used as a matching field. 
 
 ## Setup 
 
