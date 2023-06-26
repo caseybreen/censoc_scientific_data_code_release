@@ -197,7 +197,7 @@ dmf_death_coverage <- data_for_plot %>%
 
 ```{r}
 ## mortality coverage 
-combined_plot <- cowplot::plot_grid(numident_coverage, dmf_death_coverage, ncol = 1, labels = "auto")
+combined_plot <- cowplot::plot_grid(dmf_death_coverage, numident_coverage, ncol = 1, labels = "auto")
 
 ## ggplot 
 ggsave(plot = combined_plot, filename = here("figs/combined_coverage_plot.png"), width = 8, height = 10)
