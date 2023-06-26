@@ -9,23 +9,9 @@ Mortality validation Code
 ## Library packages 
 library(tidyverse)
 library(data.table)
-library(memisc)
 library(here)
-library(HMDHFDplus)
-library(gridExtra)
-library(ggpubr)
 library(cowplot)
-library(gt)
-library(fixest)
-library(stargazer)
-library(choroplethrZip)
-library(choroplethr)
-library(sf)
-library(ggplot2)
 library(broom)
-library(lubridate)
-library(censocdev)
-library(ggrepel)
 
 ## read in data 
 numident <- fread("~mariaosborne-ipums/censoc_weights/data/numident/numident_weights_all_adjusted_final.csv")

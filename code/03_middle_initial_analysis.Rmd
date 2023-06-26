@@ -14,22 +14,9 @@ Library packages and source functions
 ## Library packages 
 library(tidyverse)
 library(data.table)
-library(memisc)
 library(here)
-library(HMDHFDplus)
-library(gridExtra)
-library(ggpubr)
 library(cowplot)
-library(gt)
-library(fixest)
-library(stargazer)
-library(choroplethrZip)
-library(choroplethr)
-library(sf)
 library(broom)
-library(lubridate)
-library(censocdev)
-library(ggrepel)
 
 ## Read in BUNMD file
 dmf_middle <- fread("/data/josh/CenSoc/censoc_data/middle_initial/dmf_v2.1_middle_initials.csv")
