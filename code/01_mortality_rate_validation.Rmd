@@ -1,9 +1,10 @@
 ---
 title: "Mortality Validation Code"
-author: Casey Breen
+author: Casey Breen and Maria Osborne 
 ---
 
-Mortality validation Code
+Summary: This script generates Figure 1, which compares the age-specific mortality rates for CenSoc-DMF and CenSoc-Numident to the "gold-standard" Human Mortality Database (HMD). 
+
 
 ```{r}
 ## Library packages 
@@ -22,7 +23,7 @@ hmd_exposure <- fread("/data/josh/CenSoc/hmd/hmd_statistics/c_exposures/cExposur
 ```
 
 
-## calculate hmd mortality rates 
+## Calculate hmd mortality rates 
 
 ```{r}
 ## hmd mortality rates  
@@ -164,7 +165,7 @@ dmf_mortality_estimation <- hmd_cohort_1910 %>%
 validation_mortality_plot <- cowplot::plot_grid(numident_mortality_validation, dmf_mortality_estimation, labels = "auto")
 
 ## save combined mortality estimation plot 
-ggsave(validation_mortality_plot, filename = here("figs/mortality_validation_hmd_plot.png"), width = 12, height = 5)
+ggsave(validation_mortality_plot, filename = here("figs/fig1_mortality_validation_hmd_plot.png"), width = 12, height = 5)
 ```
 
 

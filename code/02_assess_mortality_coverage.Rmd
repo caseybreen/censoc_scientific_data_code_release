@@ -4,7 +4,7 @@ author: Casey Breen
 date: February 12, 2023
 ---
 
-Summary: Code to benchmark the mortality coverage of the DMF and Numident (ages 65+) against the Human Mortality database.  
+Summary: Code to generate Figure 2, which benchmarks the mortality coverage (total count of deaths, annually) of the DMF and Numident (ages 65+) against the Human Mortality database. 
 
 ## Setup 
 
@@ -184,10 +184,10 @@ dmf_death_coverage <- data_for_plot %>%
 
 ```{r}
 ## mortality coverage 
-combined_plot <- cowplot::plot_grid(dmf_death_coverage, numident_coverage, ncol = 1, labels = "auto")
+death_coverage_plot <- cowplot::plot_grid(dmf_death_coverage, numident_coverage, ncol = 1, labels = "auto")
 
 ## ggplot 
-ggsave(plot = combined_plot, filename = here("figs/combined_coverage_plot.png"), width = 8, height = 10)
+ggsave(plot = death_coverage_plot, filename = here("figs/fig2_death_coverage_plot.png"), width = 8, height = 10)
 ```
 
 
