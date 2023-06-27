@@ -34,6 +34,6 @@ Alternatively, researchers can run each script individually in any order.
 ### Authors
 
 - [Casey F. Breen](caseybreen.com)
-- [Maria Osborne](https://nathanseltzer.github.io/)
+- Maria Osborne
 - [Joshua R. Goldstein](https://jrgoldstein.com/)
 
