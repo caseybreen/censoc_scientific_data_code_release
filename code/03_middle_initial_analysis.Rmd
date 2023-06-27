@@ -19,8 +19,8 @@ library(cowplot)
 library(broom)
 
 ## Read in BUNMD file
-dmf_middle <- fread("/data/josh/CenSoc/censoc_data/middle_initial/dmf_v2.1_middle_initials.csv")
-numident_middle <- fread("/data/josh/CenSoc/censoc_data/middle_initial/numident_v2.1_middle_initials.csv")
+dmf_middle <- fread("/data/censoc/miscellaneous/middle_initial/dmf_v2.1_middle_initials.csv")
+numident_middle <- fread("/data/censoc/miscellaneous/middle_initial/numident_v2.1_middle_initials.csv")
 
 ```
 

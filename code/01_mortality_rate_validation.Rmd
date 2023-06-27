@@ -18,8 +18,8 @@ library(broom)
 numident <- fread("~mariaosborne-ipums/censoc_weights/data/numident/numident_weights_all_adjusted_final.csv")
 dmf <- fread("~mariaosborne-ipums/censoc_weights/data/DMF/dmf_weights_all_adjusted_final.csv")
 
-hmd_mr <- fread("/data/josh/CenSoc/hmd/hmd_statistics/c_death_rates/cMx_1x1/USA.cMx_1x1.txt") 
-hmd_exposure <- fread("/data/josh/CenSoc/hmd/hmd_statistics/c_exposures/cExposures_1x1/USA.cExposures_1x1.txt")
+hmd_mr <- fread(here("data/USA.cMx_1x1.csv"))
+hmd_exposure <- fread(here("data/USA.cExposures_1x1.csv"))
 ```
 
 

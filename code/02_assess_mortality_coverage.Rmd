@@ -15,6 +15,7 @@ Library packages and source functions
 library(tidyverse)
 library(data.table)
 library(here)
+library(censocdev)
 library(cowplot)
 library(ggrepel)
 
@@ -23,7 +24,7 @@ bunmd <- fread(here("data/bunmd_v2.csv"))
 hmd <- fread(here("data/hmd_deaths_1x1_usa.csv"))
 ```
 
-# Figure 1 — Compare BUNMD and HMD Death Coverage 
+# Figure 2 — Compare BUNMD and HMD Death Coverage 
 
 ```{r}
 ## Get HMD deaths from website
@@ -37,21 +38,12 @@ numident_deaths_tabulated <- bunmd %>%
   summarize(deaths = n()) %>% 
   mutate(source = "Numident")
 
-# ## Tabulate deaths in BUNMD for 65+
-# bunmd.deaths.tabulated_complete <- bunmd %>% 
-#   filter(!is.na(ccweight)) %>% 
-#   filter(death_age >= 65) %>% 
-#   group_by(Year = dyear) %>% 
-#   summarize(deaths = n()) %>% 
-#   mutate(source = "BUNMD Complete Case")
-
 ## Tabulate deaths in HMD for 65+ 
 hmd_deaths_tabulated <- hmd %>%
   filter(Age >= 65) %>% 
   group_by(Year) %>% 
   summarize(deaths = sum(Total)) %>% 
   mutate(source = "HMD")
-
 
 ## read in censoc_numident 
 censoc_numident <- fread("/censoc/data/censoc_v2.1/censoc_numident_v2.1.csv")
