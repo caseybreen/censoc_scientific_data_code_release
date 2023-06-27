@@ -3,7 +3,7 @@ title: "Association between education and longevity"
 author: Casey Breen
 ---
 
-Summary: This .Rmd file contains code to replicate the "This Study" results in Table 4. 
+Summary: This .Rmd file contains code to replicate the "This Study" results in Table 4. It calculates the educational gradient to longevity by fitting a parametric Gompertz model. 
 
 Description of Table 4: Estimates of education gradient across studies
 
