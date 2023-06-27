@@ -57,7 +57,7 @@ recode_education <- function(df, educ_var) {
 
 ```{r}
 ## read in dmf 
-dmf <- fread("/censoc/data/censoc_v2.1/censoc_dmf_v2.1.csv") %>% 
+dmf <- fread("~mariaosborne-ipums/censoc_weights/data/data_for_release/datafiles_with_raking_adj/censoc_dmf_v3.csv") %>% 
   janitor::clean_names()
 ## read in 1940 census 
 census_1940 <- fread("/ipums-repo2022/1940/TSV/P.tsv", select = c("HISTID", "SERIALP", "AGE", "INCWAGE", "SEX", "EDUC", "RACE", "RELATE", "REGION", "MARST", "SEI")) %>% 
@@ -106,13 +106,9 @@ gc()
 ## recode variables 
 census_1940_hh_vars_recode <- census_1940_hh_vars %>% 
   mutate(match_conservative = case_when(
-    link_abe_exact_conservative == 1 ~ "Matched",
+    !is.na(byear) ~ "Matched",
     TRUE ~ "Unmatched"
   ),
-  match_standard = case_when(
-    link_abe_exact_conservative %in% c(0, 1) ~ "Matched",
-    TRUE ~ "Unmatched"
-  ), 
   hs = case_when(
     educ >= 60 & educ < 998 ~ 1,
     TRUE ~ 0
@@ -176,40 +172,12 @@ census_1940_hh_vars_recode  <- census_1940_hh_vars_recode %>%
   ),
   region_string = as_factor(region)) %>% 
   # filter for age (proxy for cohort)
-  filter(age %in% 20:40) %>%  
-  mutate(link_abe_exact_standard = case_when(
-    link_abe_exact_conservative %in% c(0, 1) ~ 1,
-    TRUE ~ 0
-  ))
-
-
+  filter(age %in% 20:40)
 ```
 
 clean up a bit
 ```{r}
 rm(census_1940_hh_vars)
-```
-
-
-## Read/attach weights
-```{r}
-new_dmf_weights <- fread("~/censoc_weights/data/DMF/dmf_weights_all_adjusted_final.csv",
-                              select = c("HISTID", "weight_final"))
-setnames(new_dmf_weights, c("histid", "weight_v3"))
-
-# join
-census_1940_hh_vars_recode <- left_join(census_1940_hh_vars_recode, new_dmf_weights,
-                                        by = "histid") %>% 
-  as.data.table()
-
-# check the join went as expected:
-# make sure only censoc records got a weight
-census_1940_hh_vars_recode[link_abe_exact_conservative ==0 & !is.na(weight_v3)] # should be empty
-# how many censoc records didn't get a weight?
-census_1940_hh_vars_recode[match_conservative == "Matched"] # 2.5 million conservative matches
-census_1940_hh_vars_recode[match_conservative == "Matched" & is.na(weight_v3)] # 161,000 without a weight
-census_1940_hh_vars_recode[match_conservative == "Matched" & is.na(weight_v3) &
-                             death_age %in% 65:100] # 293 without weights in the correct age range.
 ```
 
 
@@ -228,7 +196,7 @@ census_characteristics <- census_1940_hh_vars_recode %>%
 
 ## unweighted tabulations for men in CenSoc-DMF conservative 
 unweighted_dmf_characteristics_conservative <- census_1940_hh_vars_recode %>% 
-  filter(link_abe_exact_conservative == 1) %>% 
+  filter(!is.na(byear)) %>% 
   select(histid, race_recode, educ_level, sei_recode, marital_status, region_string, rural, homeown) %>%
   pivot_longer(-histid) %>% 
   group_by(name, value) %>%
@@ -238,13 +206,13 @@ unweighted_dmf_characteristics_conservative <- census_1940_hh_vars_recode %>%
 
 ## weighted tabulation for men in the CenSoc-DMF Conservative
 weighted_dmf_characteristics_conservative <- census_1940_hh_vars_recode %>% 
-  filter(link_abe_exact_conservative == 1) %>% 
-  filter(!is.na(weight_v3)) %>% 
+  filter(!is.na(byear)) %>% 
+  filter(!is.na(weight)) %>% 
   select(histid, race_recode, educ_level, sei_recode,
-         marital_status, region_string, rural, homeown, weight_v3) %>%
-  pivot_longer(-c(histid, weight_v3)) %>% 
+         marital_status, region_string, rural, homeown, weight) %>%
+  pivot_longer(-c(histid, weight)) %>% 
   group_by(name, value) %>% 
-  count(wt = weight_v3) %>% 
+  count(wt = weight) %>% 
   group_by(name) %>% 
   mutate(prop = n/sum(n)) %>% 
   mutate(prop = round(100*prop, 1)) %>% 
