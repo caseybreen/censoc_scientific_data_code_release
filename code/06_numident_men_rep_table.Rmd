@@ -1,0 +1,319 @@
+---
+title: "Table 6: Numident Men"
+author: "Maria Osborne, after Casey Breen & Kathy Parez" 
+---
+
+Numident table
+
+```{r}
+## Library packages 
+library(tidyverse)
+library(data.table)
+library(cowplot)
+library(gt)
+library(ipumsr)
+library(here)
+library(janitor)
+```
+
+## function for recoding education
+```{r}
+## function for recoding education
+recode_education <- function(df, educ_var) {
+  educ_var <- enquo(educ_var)
+  df <- df  %>%
+    mutate(educ = !!educ_var) %>%
+    mutate(educ_yrs = case_when(
+      educ == 2 ~ 0,
+      educ == 12 ~ 0,
+      educ == 14 ~ 1,
+      educ == 15 ~ 2,
+      educ == 16 ~ 3,
+      educ == 17 ~ 4,
+      educ == 22 ~ 5,
+      educ == 23 ~ 6,
+      educ == 25 ~ 7,
+      educ == 26 ~ 8,
+      educ == 30 ~ 9,
+      educ == 40 ~ 10,
+      educ == 50 ~ 11,
+      educ == 60 ~ 12,
+      educ == 70 ~ 13,
+      educ == 80 ~ 14,
+      educ == 90 ~ 15,
+      educ == 100 ~ 16,
+      educ == 110 ~ 17,
+      educ == 111 ~ 17,
+      educ == 112 ~ 17,
+      educ == 113 ~ 17
+    ))
+
+  return(df)
+}
+```
+
+
+#read in numident
+```{r}
+## read in numident 
+numident <- fread("~mariaosborne-ipums/censoc_weights/data/data_for_release/datafiles_with_raking_adj/censoc_numident_v3.csv") %>% 
+  janitor::clean_names()
+## read in 1940 census 
+census_1940 <- fread("/ipums-repo2022/1940/TSV/P.tsv", select = c("HISTID", "SERIALP", "AGE", "INCWAGE", "SEX", "EDUC", "RACE", "RELATE", "REGION", "MARST", "SEI")) %>% 
+  janitor::clean_names()
+## read in 1940 census household
+census_1940_h <- fread("/ipums-repo2022/1940/TSV/H.tsv", select = c("SERIAL", "STATEFIP", "OWNERSHP", "URBAN", "REGION")) %>% 
+  janitor::clean_names()
+```
+
+
+#Linking the data
+```{r}
+## combine census person and household vars 
+census_1940_hh_vars <- census_1940 %>% 
+  inner_join(census_1940_h, by = c("serialp" = "serial"))
+
+## add on numident  
+census_1940_hh_vars <- census_1940_hh_vars %>% 
+  left_join(numident, by = "histid")
+
+# drop women (sex.x == sex.y always)
+census_1940_hh_vars <- census_1940_hh_vars %>% 
+  filter(sex.x == 1)
+
+## recode education variable to years of education
+census_1940_hh_vars <- census_1940_hh_vars %>% 
+  recode_education(educ_var = educ)
+## read data dictionary initiative (DDI) file with varnames and var labels 
+ipums_ddi <- ipumsr::read_ipums_ddi("/ipums-repo2019-1/fullcount.ddi.xml")
+## add on ipums value + variable labels  
+census_1940_hh_vars <- census_1940_hh_vars %>% 
+  janitor::clean_names(case = "all_caps") %>% 
+  ipumsr::ipums_collect(ipums_ddi, var_attrs = c("val_labels", "var_label", "var_desc")) %>% 
+  janitor::clean_names()
+```
+
+
+# remove big intermediary files
+```{r}
+rm(census_1940)
+rm(census_1940_h)
+rm(numident)
+gc()
+```
+
+
+#Recode variables
+```{r}
+census_1940_hh_vars_recode <- census_1940_hh_vars %>% 
+  mutate(match_conservative = case_when(
+    !is.na(byear) ~ "Matched",
+    TRUE ~ "Unmatched"
+  ),
+  hs = case_when(
+    educ >= 60 & educ < 998 ~ 1,
+    TRUE ~ 0
+  ), 
+  rural = case_when(
+    urban == 1 ~ 1,
+    TRUE ~ 0
+  ),
+  black = case_when( 
+    race == 200 ~ 1,
+    TRUE ~ 0
+  ), white = case_when(
+    race == 100 ~ 1,
+    TRUE ~ 0
+  ),
+  homeown = case_when(
+    ownershp == 10 ~ 1, 
+    TRUE ~ 0
+  ),
+  p_hh_head = case_when(
+    relate == 101 ~ 1, 
+    TRUE ~ 0
+  ),
+  p_hh_head = case_when(
+    relate == 101 ~ 1, 
+    TRUE ~ 0
+  ),
+  educ_level = case_when(
+    educ <= 50 ~ "< High School",
+    educ %in% 60:90 ~ "High School or some college",
+    educ %in% 100 ~ "Bachelors Degree",
+    educ %in% 110:116 ~ "Advanced Degree"
+  ), 
+  sei_recode = case_when(
+    sei %in% 1:9 ~ "sei_1_9",
+    sei %in% 10:14 ~ "sei_10_14",
+    sei %in% 15:25 ~ "sei_15_25",
+    sei >= 26 ~      "sei_26+"
+  ),
+  marital_status = case_when(
+      marst %in% 1:2 ~ "married",
+      TRUE ~ "not married" ),
+  race_recode = case_when(
+    race == 100 ~ "White",
+    race == 200 ~ "Black",
+    TRUE ~ "Other"
+  ))
+```
+
+# more recoding, filter to select cohorts
+```{r}
+census_1940_hh_vars_recode <- census_1940_hh_vars_recode %>% 
+  mutate(rural = case_when(
+    rural == 1 ~ "Rural",
+    TRUE ~ "Urban"
+  ),
+  homeown = case_when(
+    homeown == 1 ~ "Home Owner",
+    TRUE ~ "Not Home Owner"
+  ),
+  region_string = as_factor(region)) %>% 
+  filter(age %in% 20:40)
+```
+
+
+
+# tabulations
+```{r}
+
+## tabulations for selected sex in 1940 census 
+census_characteristics <- census_1940_hh_vars_recode %>% 
+  select(histid, race_recode, educ_level, sei_recode, marital_status, region_string, rural, homeown) %>%
+  pivot_longer(-histid) %>% 
+  group_by(name, value) %>%
+  tally() %>%            
+  mutate(prop = round(100*prop.table(n), 1)) %>% 
+  rename(n_gen = n, prop_gen = prop)
+
+## tabulations for sex in CenSoc-Numident conservative 
+unweighted_numident_characteristics_conservative <- census_1940_hh_vars_recode %>% 
+  filter(match_conservative == "Matched") %>% 
+  select(histid, race_recode, educ_level, sei_recode, marital_status, region_string, rural, homeown) %>%
+  pivot_longer(-histid) %>% 
+  group_by(name, value) %>%
+  tally() %>%            
+  mutate(prop = round(100*prop.table(n), 1)) %>% 
+  rename(n_numi_conservative = n, prop_numi_conservative = prop)
+
+# weighted totals/proportions
+weighted_numident_characteristics_conservative <- census_1940_hh_vars_recode %>% 
+  filter(match_conservative == "Matched") %>% 
+  filter(!is.na(weight)) %>% 
+  select(histid, race_recode, educ_level, sei_recode,
+         marital_status, region_string, rural, homeown, weight) %>%
+  pivot_longer(-c(histid, weight)) %>% 
+  group_by(name, value) %>% 
+  count(wt = weight) %>% 
+  group_by(name) %>% 
+  mutate(prop = n/sum(n)) %>% 
+  mutate(prop = round(100*prop, 1)) %>% 
+  rename(n_numi_conservative_weighted = n, prop_numi_conservative_weighted = prop)
+  
+
+# join and relevel some factors so they'll show up in order
+unweighted_combined_characteristics <- census_characteristics %>% 
+  inner_join(unweighted_numident_characteristics_conservative, by = c("name", "value")) %>% 
+  mutate(name = as.factor(name), value = as.factor(value)) %>% 
+  mutate(name = factor(name, levels = c("educ_level", "race_recode", "marital_status", "homeown", "sei_recode", "rural", "region_string"))) %>% 
+  arrange(name, value) 
+
+weighted_combined_characteristics <- census_characteristics %>% 
+  inner_join(weighted_numident_characteristics_conservative, by = c("name", "value")) %>% 
+  mutate(name = as.factor(name), value = as.factor(value)) %>% 
+  mutate(name = factor(name, levels = c("educ_level", "race_recode", "marital_status", "homeown", "sei_recode", "rural", "region_string"))) %>% 
+  arrange(name, value) 
+
+# create difference in percent columns
+unweighted_combined_characteristics <- unweighted_combined_characteristics %>% 
+  mutate(difference_in_proportions_unweighted = prop_numi_conservative - prop_gen)
+
+weighted_combined_characteristics <- weighted_combined_characteristics %>% 
+  mutate(difference_in_proportions_weighted = prop_numi_conservative_weighted - prop_gen)
+```
+
+
+
+## create table 
+## will have to do some manual clean-up but this gets us 80% of the way
+```{r}
+combined_characteristics <- left_join(unweighted_combined_characteristics
+                                  %>% select(-c(difference_in_proportions_unweighted)),
+                                  weighted_combined_characteristics %>% 
+                                    select(name, value, prop_numi_conservative_weighted, difference_in_proportions_weighted),
+                                  by = c("name", "value"))
+
+
+combined_characteristics <- combined_characteristics %>% select(name, value,
+                                      n_numi_conservative, n_gen,
+                                      prop_numi_conservative, prop_numi_conservative_weighted,
+                                      prop_gen, difference_in_proportions_weighted)
+
+# rename variables to look nicer
+for_table <- combined_characteristics %>% 
+  mutate(name = case_when(name == "educ_level" ~ "Education",
+                          name == "marital_status" ~ "Marital Status",
+                          name == "race_recode" ~ "Race",
+                          name == "region_string" ~ "Region",
+                          name == "rural" ~ "Rural",
+                          name == "sei_recode" ~ "Socioeconomic Index",
+                          name == "homeown" ~ "Home Ownership"))
+  
+# get rid of "division"
+for_table$value<-gsub("Division","",for_table$value)
+for_table$value<-gsub("Div.","",for_table$value)
+
+# table
+table_s3_s <- gt(data = for_table) %>% 
+  tab_spanner(
+    label = "Count",
+    columns = c(n_numi_conservative, n_gen)) %>% 
+  tab_spanner(
+    label = "Proportion (%)",
+    columns = c(prop_numi_conservative, prop_numi_conservative_weighted, prop_gen)) %>% 
+  tab_spanner(
+    label = "Difference (%)",
+    columns = c(difference_in_proportions_weighted)) %>% 
+  cols_label(
+    "n_gen" = "1940 Census",
+    "prop_gen" = "1940 Census",
+    "n_numi_conservative"  = "CenSoc-Numident",
+    "prop_numi_conservative" = "CenSoc-Numident (unweighted)",
+    "prop_numi_conservative_weighted" = "CenSoc-Numident (weighted)",
+    "difference_in_proportions_weighted" = "Weighted CenSoc-Numident - Census",
+    value = ""
+  ) %>% 
+  fmt_number(
+    columns = c(n_gen, n_numi_conservative),
+     use_seps = TRUE,
+    decimals = 0
+  ) %>% 
+  tab_style(
+    style = list(
+      cell_text(weight = "bold")),
+    locations = cells_row_groups()
+  ) %>% 
+  opt_row_striping(row_striping = T) %>% 
+  cols_align("left") 
+
+table_s3_s
+
+```
+
+
+# save table
+```{r}
+## save table 
+table_s3_s %>%
+  gtsave("table7_numident_men_characteristics_weighted.tex",
+         path = here("tabs")) 
+```
+
+# clean up
+clean up
+```{r}
+rm(list = ls())
+```
+
