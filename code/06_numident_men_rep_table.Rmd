@@ -56,8 +56,6 @@ recode_education <- function(df, educ_var) {
 #read in numident
 ```{r}
 ## read in numident 
-#numident <- fread("~mariaosborne-ipums/censoc_weights/data/data_for_release/datafiles_with_raking_adj/censoc_numident_v3.csv") %>% 
-#  janitor::clean_names()
 numident <- fread("/data/censoc/censoc_data_releases/censoc_numident/censoc_numident_v3/censoc_numident_v3.csv") %>% 
   janitor::clean_names()
 ## read in 1940 census 
