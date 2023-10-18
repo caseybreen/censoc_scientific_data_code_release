@@ -29,8 +29,10 @@ Alternatively, researchers can run each script individually in any order.
 - `01_mortality_rate_validation` - this script generates Figure 1, which compares the age-specific mortality rates for CenSoc-DMF and CenSoc-Numident to the "gold-standard" Human Mortality Database (HMD). 
 - `02_assess_mortality_coverage` - Code to generate Figure 2, which benchmarks the mortality coverage (total count of deaths, annually) of the DMF and Numident (ages 65+) against the Human Mortality database. 
 - `03_middle_initial_analysis.Rmd` - Code to assess the middle initial agreement of the CenSoc-DMF and CenSoc-Numident. Middle initial was not used as a matching field.  
-- `04_association_between_education_longevity.Rmd` - This .Rmd file contains code to replicate the "This Study" results in Table 4. It calculates the educational gradient to longevity by fitting a parametric Gompertz model. 
-
+- `04_association_between_education_longevity.Rmd` - This .Rmd file contains code to replicate the "This Study" results in Table 4. It calculates the educational gradient to longevity by fitting a parametric Gompertz model.
+- `05_dmf_representative_table.Rmd` - This .Rmd filed contains code to replicate table 5, which compares the composition of the 1940 census and the CenSoc-DMF along several dimensions. 
+- `06_numident_men_rep_table.Rmd` - This .Rmd filed contains code to replicate table 6, which compares the male composition of the 1940 census and CenSoc-Numident along several dimensions.
+- `07_numident_women_rep_table.Rmd` - This .Rmd filed contains code to replicate table 7, which compares the female composition of the 1940 census and CenSoc-Numident along several dimensions. 
 ### Authors
 
 - [Casey F. Breen](caseybreen.com)
