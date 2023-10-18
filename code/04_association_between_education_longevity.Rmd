@@ -16,26 +16,33 @@ library(socviz)
 library(cowplot)
 library(ggsci)
 library(here)
-source("helpers.R")
+source(here("code/helpers.R"))
 ```
 
 
 ```{r}
-## read in prelinked CenSoc datasets and filter to "conservative" matches
-dmf <- fread(here("data/censoc_dmf_v3_linked_extract.csv")) 
-
-numident <- fread(here("data/censoc_numident_v3_linked_extract.csv"))
+## read in prelinked CenSoc datasets 
+dmf <- fread("/data/censoc/censoc_data_releases/censoc_linked_to_census/v3/censoc_dmf_v3_linked.csv")
+dmf <- recode_education(dmf, educ_var = "EDUCD")
+numident <- fread("/data/censoc/censoc_data_releases/censoc_linked_to_census/v3/censoc_numident_v3_linked.csv")
+numident <- recode_education(numident, educ_var = "EDUCD")
 ```
 
 
 ```{r}
 ## numident results 
-numident_results <-  gompertztrunc::gompertz_mle(death_age ~ educ_yrs, data = numident %>% filter(byear %in% 1910:1920 & sex == 1), left_trunc = 1988, right_trunc = 2005, weights = weight_final)
+numident_results <-  gompertztrunc::gompertz_mle(death_age ~ educ_yrs,
+                                                 data = numident %>% filter(byear %in% 1910:1920 & sex == 1),
+                                                 left_trunc = 1988, right_trunc = 2005,
+                                                 weights = weight)
 
 gompertztrunc::convert_hazards_to_ex(numident_results$results, age = 35)
   
 ## dmf results 
-dmf_results <- gompertztrunc::gompertz_mle(death_age ~ educ_yrs, data = dmf %>% filter(byear %in% 1910:1920), left_trunc = 1975, right_trunc = 2005, weights = weight_final)
+dmf_results <- gompertztrunc::gompertz_mle(death_age ~ educ_yrs,
+                                           data = dmf %>% filter(byear %in% 1910:1920),
+                                           left_trunc = 1975, right_trunc = 2005,
+                                           weights = weight)
 
 gompertztrunc::convert_hazards_to_ex(dmf_results$results, age = 35)
 ```

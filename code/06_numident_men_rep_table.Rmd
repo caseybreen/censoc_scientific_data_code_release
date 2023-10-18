@@ -56,7 +56,9 @@ recode_education <- function(df, educ_var) {
 #read in numident
 ```{r}
 ## read in numident 
-numident <- fread("~mariaosborne-ipums/censoc_weights/data/data_for_release/datafiles_with_raking_adj/censoc_numident_v3.csv") %>% 
+#numident <- fread("~mariaosborne-ipums/censoc_weights/data/data_for_release/datafiles_with_raking_adj/censoc_numident_v3.csv") %>% 
+#  janitor::clean_names()
+numident <- fread("/data/censoc/censoc_data_releases/censoc_numident/censoc_numident_v3/censoc_numident_v3.csv") %>% 
   janitor::clean_names()
 ## read in 1940 census 
 census_1940 <- fread("/ipums-repo2022/1940/TSV/P.tsv", select = c("HISTID", "SERIALP", "AGE", "INCWAGE", "SEX", "EDUC", "RACE", "RELATE", "REGION", "MARST", "SEI")) %>% 
@@ -307,7 +309,7 @@ table_s3_s
 ```{r}
 ## save table 
 table_s3_s %>%
-  gtsave("table7_numident_men_characteristics_weighted.tex",
+  gtsave("table6_numident_men_characteristics_weighted.tex",
          path = here("tabs")) 
 ```
 

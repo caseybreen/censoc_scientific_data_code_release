@@ -57,7 +57,7 @@ recode_education <- function(df, educ_var) {
 
 ```{r}
 ## read in dmf 
-dmf <- fread("~mariaosborne-ipums/censoc_weights/data/data_for_release/datafiles_with_raking_adj/censoc_dmf_v3.csv") %>% 
+dmf <- fread("/data/censoc/censoc_data_releases/censoc_dmf/censoc_dmf_v3/censoc_dmf_v3.csv") %>% 
   janitor::clean_names()
 ## read in 1940 census 
 census_1940 <- fread("/ipums-repo2022/1940/TSV/P.tsv", select = c("HISTID", "SERIALP", "AGE", "INCWAGE", "SEX", "EDUC", "RACE", "RELATE", "REGION", "MARST", "SEI")) %>% 

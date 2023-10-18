@@ -15,16 +15,18 @@ Library packages and source functions
 library(tidyverse)
 library(data.table)
 library(here)
-library(censocdev)
+#library(censocdev)
 library(cowplot)
 library(ggrepel)
 
 ## Read in BUNMD file
-bunmd <- fread(here("data/bunmd_v2.csv"))
+bunmd <- fread("/data/censoc/censoc_data_releases/bunmd/bunmd_v2/bunmd_v2.csv")
 hmd <- fread(here("data/hmd_deaths_1x1_usa.csv"))
 ```
 
 # Figure 2 — Compare BUNMD and HMD Death Coverage 
+
+## make sure uppr limit is changed where neccessary
 
 ```{r}
 ## Get HMD deaths from website
@@ -46,15 +48,13 @@ hmd_deaths_tabulated <- hmd %>%
   mutate(source = "HMD")
 
 ## read in censoc_numident 
-censoc_numident <- fread("/censoc/data/censoc_v2.1/censoc_numident_v2.1.csv")
+censoc_numident <- fread("/data/censoc/censoc_data_releases/censoc_numident/censoc_numident_v3/censoc_numident_v3.csv")
 
 ## censoc numident tabulated 
 censoc_numident_tabulated <- censoc_numident %>% 
-  filter(link_abe_exact_conservative == 1) %>% 
    group_by(Year = dyear) %>% 
   summarize(deaths = n()) %>% 
   mutate(source = "CenSoc-Numident")
-
 
 ## Combine into one data frame 
 data_for_plot_numident <- numident_deaths_tabulated %>%  ## bunmd.deaths.tabulated_complete %>% 
@@ -86,13 +86,13 @@ numident_coverage <-  data_for_plot_numident %>%
   theme(legend.key.width=unit(1.5, "cm")) + 
   geom_label_repel(aes(label = label),
                    nudge_x = 4,
-                  na.rm = TRUE, size = 3) 
+                  na.rm = TRUE, size = 3)
 ```
 
 ## DMF Death Coverage 
 
 ```{r}
-## Read in BUNMD file
+## Read in Full DMF file
 dmf <- fread("/censoc/data/dmf/dmf.csv", colClasses = c('dob'='character', 'dod' = 'character'))
 
 ## now get birth and death year
@@ -110,6 +110,7 @@ dmf[,"census_age" := ifelse(bmonth < 4,
                                  1939 - byear)]
 
 ## calculate age of death 
+source(here("code/helpers.R"))
 dmf <- dmf %>% 
   calculate_age_at_death()
 
@@ -133,11 +134,10 @@ hmd.deaths.tabulated <- hmd_deaths %>%
   mutate(source = "HMD")
 
 ## dmf death coverage 
-censoc_dmf <- fread("/censoc/data/censoc_v2.1/censoc_dmf_v2.1.csv")
+censoc_dmf <- fread("/data/censoc/censoc_data_releases/censoc_dmf/censoc_dmf_v3/censoc_dmf_v3.csv")
 
 ## censoc numident tabulated 
 censoc_dmf_tabulated <- censoc_dmf %>% 
-  filter(link_abe_exact_conservative == 1) %>% 
   group_by(Year = dyear) %>% 
   summarize(deaths = n()) %>% 
   mutate(source = "CenSoc-DMF")
