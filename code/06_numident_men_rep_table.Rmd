@@ -312,8 +312,8 @@ table_s3_s %>%
 ```
 
 # clean up
-clean up
+clean up, drop everything besides functions 
 ```{r}
-rm(list = ls())
+rm(list = setdiff(ls(), lsf.str()))
 ```
 

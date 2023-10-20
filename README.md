@@ -4,7 +4,7 @@ This repository contains code and materials to replicate ["CenSoc: Linked Admini
 
 ### Replication Package
 
-The this repository includes code to replicate all figures and tables in the paper. There are three steps to running the replication code: 
+This repository includes code to replicate all figures and tables in the paper. There are three steps to running the replication code: 
 
 1. Clone this repository
 2. Download the required datasets and update paths (when necessary)
@@ -30,7 +30,7 @@ Alternatively, researchers can run each script individually in any order.
 - `02_assess_mortality_coverage` - Code to generate Figure 2, which benchmarks the mortality coverage (total count of deaths, annually) of the DMF and Numident (ages 65+) against the Human Mortality database. 
 - `03_middle_initial_analysis.Rmd` - Code to assess the middle initial agreement of the CenSoc-DMF and CenSoc-Numident. Middle initial was not used as a matching field.  
 - `04_association_between_education_longevity.Rmd` - This .Rmd file contains code to replicate the "This Study" results in Table 4. It calculates the educational gradient to longevity by fitting a parametric Gompertz model.
-- `05_dmf_representative_table.Rmd` - This .Rmd filed contains code to replicate table 5, which compares the composition of the 1940 census and the CenSoc-DMF along several dimensions. 
+- `05_dmf_representative_table.Rmd` - This .Rmd filed contains code to replicate table 5, which compares the composition of the 1940 census and the CenSoc-DMF along several dimensions.
 - `06_numident_men_rep_table.Rmd` - This .Rmd filed contains code to replicate table 6, which compares the male composition of the 1940 census and CenSoc-Numident along several dimensions.
 - `07_numident_women_rep_table.Rmd` - This .Rmd filed contains code to replicate table 7, which compares the female composition of the 1940 census and CenSoc-Numident along several dimensions. 
 ### Authors

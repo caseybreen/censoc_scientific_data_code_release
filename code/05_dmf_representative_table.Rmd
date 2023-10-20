@@ -322,7 +322,7 @@ table_s3 %>%
 
 clean up
 ```{r}
-rm(list = ls())
+rm(list = setdiff(ls(), lsf.str()))
 ```
 
 

@@ -12,10 +12,10 @@ Description of Table 4: Estimates of education gradient across studies
 library(data.table)
 library(tidyverse)
 library(broom)
-library(socviz)
 library(cowplot)
 library(ggsci)
 library(here)
+library(gompertztrunc)
 source(here("code/helpers.R"))
 ```
 
