@@ -183,3 +183,130 @@ ggsave(plot = death_coverage_plot, filename = here("figs/fig2_death_coverage_plo
 ```
 
 
+
+```{r}
+## Create death coverage plot
+dmf_death_coverage1 <- data_for_plot %>% 
+  mutate(label = case_when(
+    Year == max(Year) & source == "DMF" ~ "DMF",
+    Year == max(Year) & source == "HMD" ~ "HMD",
+    Year == 2005 & source == "CenSoc-DMF" ~ "CenSoc-DMF",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(source != "CenSoc-DMF") %>% 
+    filter(source != "DMF") %>% 
+ # mutate(label = if_else(Year == 2005, as.character(source), NA_character_)) %>%
+ ggplot(aes(x = Year, y = deaths, linetype = source, group = source)) +  
+ geom_line(size = 1) + 
+   labs(x = "Year",
+       y = "Count",
+       title = "DMF Death Coverage (65+)") +
+  scale_y_continuous(labels = scales::comma) + 
+  scale_linetype_manual(values = c( "solid")) + 
+  scale_x_continuous(breaks = scales::pretty_breaks(n=10)) + 
+  theme_cowplot() + 
+  theme(legend.position="bottom", legend.title = element_blank()) +
+  theme(legend.key.width=unit(1.5, "cm")) + 
+  geom_label_repel(aes(label = label),
+                   nudge_x = 3,
+                  na.rm = TRUE, size = 3) + 
+  ylim(0, max(data_for_plot$deaths))
+
+
+## Create death coverage plot.
+dmf_death_coverage2 <- data_for_plot %>% 
+  mutate(label = case_when(
+    Year == max(Year) & source == "DMF" ~ "DMF",
+    Year == max(Year) & source == "HMD" ~ "HMD",
+    Year == 2005 & source == "CenSoc-DMF" ~ "CenSoc-DMF",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(source != "CenSoc-DMF") %>% 
+ # mutate(label = if_else(Year == 2005, as.character(source), NA_character_)) %>%
+ ggplot(aes(x = Year, y = deaths, linetype = source, group = source)) +  
+ # geom_vline(xintercept = c(1975, 2005), linetype = "longdash", color = "grey", size = 1) + 
+ geom_line(size = 1) + 
+   labs(x = "Year",
+       y = "Count",
+       title = "DMF Death Coverage (65+)") +
+  scale_y_continuous(labels = scales::comma) + 
+  scale_linetype_manual(values = c("dashed",  "solid")) + 
+  scale_x_continuous(breaks = scales::pretty_breaks(n=10)) + 
+  theme_cowplot() + 
+  theme(legend.position="bottom", legend.title = element_blank()) +
+  theme(legend.key.width=unit(1.5, "cm")) + 
+  geom_label_repel(aes(label = label),
+                   nudge_x = 3,
+                  na.rm = TRUE, size = 3) + 
+  ylim(0, max(data_for_plot$deaths))
+
+## Create death coverage plot.
+dmf_death_coverage3 <- data_for_plot %>% 
+  mutate(label = case_when(
+    Year == max(Year) & source == "DMF" ~ "DMF",
+    Year == max(Year) & source == "HMD" ~ "HMD",
+    Year == 2005 & source == "CenSoc-DMF" ~ "CenSoc-DMF",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(source != "CenSoc-DMF") %>% 
+ # mutate(label = if_else(Year == 2005, as.character(source), NA_character_)) %>%
+ ggplot(aes(x = Year, y = deaths, linetype = source, group = source)) +  
+ geom_vline(xintercept = c(1975, 2005), linetype = "longdash", color = "grey", size = 1) + 
+ geom_line(size = 1) + 
+   labs(x = "Year",
+       y = "Count",
+       title = "DMF Death Coverage (65+)") +
+  scale_y_continuous(labels = scales::comma) + 
+  scale_linetype_manual(values = c("dashed",  "solid")) + 
+  scale_x_continuous(breaks = scales::pretty_breaks(n=10)) + 
+  theme_cowplot() + 
+  theme(legend.position="bottom", legend.title = element_blank()) +
+  theme(legend.key.width=unit(1.5, "cm")) + 
+  geom_label_repel(aes(label = label),
+                   nudge_x = 3,
+                  na.rm = TRUE, size = 3) + 
+  ylim(0, max(data_for_plot$deaths))
+
+dmf_death_coverage1
+dmf_death_coverage2
+dmf_death_coverage3
+
+ggsave(plot = dmf_death_coverage1, filename = here("figs/reserve/dmf_death_coverage1.png"), width = 8, height = 10)
+ggsave(plot = dmf_death_coverage2, filename = here("figs/reserve/dmf_death_coverage2.png"), width = 8, height = 10)
+ggsave(plot = dmf_death_coverage3, filename = here("figs/reserve/dmf_death_coverage3.png"), width = 8, height = 10)
+
+```
+
+
+```{r}
+## Create death coverage plot
+numident_coverage3 <-  data_for_plot_numident %>% 
+   mutate(label = case_when(
+    Year == 2007 & source == "Numident" ~ "Numident",
+    Year == max(Year) & source == "HMD" ~ "HMD",
+    Year == 2005 & source == "CenSoc-Numident" ~ "CenSoc-Numident",
+    TRUE ~ NA_character_
+  )) %>% 
+  filter(source != "CenSoc-Numident") %>% 
+  ggplot(aes(x = Year, y = deaths, linetype = source)) + 
+  geom_vline(xintercept = c(1988, 2005), linetype = "longdash", color = "grey", size = 1) + 
+  geom_line(size = 1) + 
+   labs(x = "Year",
+       y = "Count",
+       title = "Numident Death Coverage (65+)") +
+  scale_y_continuous(labels = scales::comma) + 
+  scale_x_continuous(breaks = scales::pretty_breaks(n=10)) + 
+  theme_cowplot() + 
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  theme(legend.key.width = unit(1.5, "cm")) + 
+  scale_linetype_manual(values = c("solid", "dashed")) + 
+  theme(legend.position="bottom", legend.title = element_blank()) +
+  theme(legend.key.width=unit(1.5, "cm")) + 
+  geom_label_repel(aes(label = label),
+                   nudge_x = 4,
+                  na.rm = TRUE, size = 3)
+
+ggsave(plot = numident_coverage3, filename = here("figs/reserve/numident_death_coverage3.png"), width = 8, height = 10)
+
+```
+

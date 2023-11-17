@@ -150,7 +150,7 @@ top <- cowplot::plot_grid(educ_yrs_plot, race_plot, labels = "auto")
 middle_initial_agreement <- cowplot::plot_grid(top, byear_plot, nrow = 2, labels = c("", "c"))
 
 ## save plot 
-ggsave(plot = middle_initial_agreement, filename = here("figs/fig_extra_middle_initial_plot.png"), height = 8, width = 8)
+# ggsave(plot = middle_initial_agreement, filename = here("figs/fig_extra_middle_initial_plot.png"), height = 8, width = 8)
 ```
 
 
